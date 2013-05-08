@@ -87,6 +87,7 @@ struct drm_proc_list {
  * "/proc/ati/%minor%/", and each entry in proc_list as
  * "/proc/ati/%minor%/%name%".
  */
+
 struct proc_dir_entry *DRM(proc_init)(drm_device_t *dev, int minor,
 				      struct proc_dir_entry *root,
 				      struct proc_dir_entry **dev_root)
@@ -95,22 +96,22 @@ struct proc_dir_entry *DRM(proc_init)(drm_device_t *dev, int minor,
 	int		      i, j;
 	char                  name[64];
 
-	if (!minor) root = create_proc_entry("dri", S_IFDIR, NULL);
+	if (!minor) root = proc_mkdir("dri", NULL);
 	if (!root) {
 		DRM_ERROR("Cannot create /proc/ati\n");
 		return NULL;
 	}
 
 	sprintf(name, "%d", minor);
-	*dev_root = create_proc_entry(name, S_IFDIR, root);
+	*dev_root = proc_mkdir(name, root);
 	if (!*dev_root) {
 		DRM_ERROR("Cannot create /proc/ati/%s\n", name);
 		return NULL;
 	}
 
 	for (i = 0; i < DRM_PROC_ENTRIES; i++) {
-		ent = create_proc_entry(DRM(proc_list)[i].name,
-					S_IFREG|S_IRUGO, *dev_root);
+		ent = proc_create_data(DRM(proc_list)[i].name,
+					S_IFREG|S_IRUGO, *dev_root, &firegl_fops, dev);
 		if (!ent) {
 			DRM_ERROR("Cannot create /proc/ati/%s/%s\n",
 				  name, DRM(proc_list)[i].name);
@@ -121,10 +122,9 @@ struct proc_dir_entry *DRM(proc_init)(drm_device_t *dev, int minor,
 			if (!minor) remove_proc_entry("dri", NULL);
 			return NULL;
 		}
-		ent->read_proc = DRM(proc_list)[i].f;
-		ent->data      = dev;
+		//ent->read_proc = DRM(proc_list)[i].f;
+		//ent->data      = dev;
 	}
-
 	return root;
 }
 
