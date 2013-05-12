@@ -95,23 +95,34 @@ struct proc_dir_entry *DRM(proc_init)(drm_device_t *dev, int minor,
 	struct proc_dir_entry *ent;
 	int		      i, j;
 	char                  name[64];
-
+#if LINUX_VERSION_CODE < KERNEL_VERSION(3,10,0)
+	if (!minor) root = create_proc_entry("dri", S_IFDIR, NULL);
+#else
 	if (!minor) root = proc_mkdir("dri", NULL);
+#endif
 	if (!root) {
 		DRM_ERROR("Cannot create /proc/ati\n");
 		return NULL;
 	}
 
 	sprintf(name, "%d", minor);
+#if LINUX_VERSION_CODE < KERNEL_VERSION(3,10,0)
+	*dev_root = create_proc_entry(name, S_IFDIR, root);
+#else
 	*dev_root = proc_mkdir(name, root);
+#endif
 	if (!*dev_root) {
 		DRM_ERROR("Cannot create /proc/ati/%s\n", name);
 		return NULL;
 	}
-
 	for (i = 0; i < DRM_PROC_ENTRIES; i++) {
+#if LINUX_VERSION_CODE < KERNEL_VERSION(3,10,0)
+		ent = create_proc_entry(DRM(proc_list)[i].name,
+					S_IFREG|S_IRUGO, *dev_root);
+#else
 		ent = proc_create_data(DRM(proc_list)[i].name,
 					S_IFREG|S_IRUGO, *dev_root, &firegl_fops, dev);
+#endif
 		if (!ent) {
 			DRM_ERROR("Cannot create /proc/ati/%s/%s\n",
 				  name, DRM(proc_list)[i].name);
@@ -122,8 +133,10 @@ struct proc_dir_entry *DRM(proc_init)(drm_device_t *dev, int minor,
 			if (!minor) remove_proc_entry("dri", NULL);
 			return NULL;
 		}
-		//ent->read_proc = DRM(proc_list)[i].f;
-		//ent->data      = dev;
+#if LINUX_VERSION_CODE < KERNEL_VERSION(3,10,0)	
+		ent->read_proc = DRM(proc_list)[i].f;
+		ent->data      = dev;
+#endif
 	}
 	return root;
 }
