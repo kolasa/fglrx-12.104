@@ -3156,7 +3156,11 @@ int ATI_API_CALL KCL_MEM_MTRR_DeleteRegion(int reg, unsigned long base, unsigned
 int ATI_API_CALL KCL_EFI_IS_ENABLED(void)
 {
 #ifdef CONFIG_EFI
-    return (efi_enabled(EFI_RUNTIME_SERVICES))? 1 : 0;
+#ifdef EFI_BOOT
+    return efi_enabled(EFI_BOOT);
+#else
+    return efi_enabled;
+#endif
 #else
     return 0;
 #endif
